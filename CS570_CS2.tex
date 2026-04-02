@@ -108,7 +108,7 @@
 
 % ── Enumerate ────────────────────────────────────────────────
 \setlist[enumerate]{noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt,
-  leftmargin=!,labelindent=\blistind,labelwidth=1em,labelsep=0.3em}
+  leftmargin=\dimexpr\blistind+\bmark\relax,itemindent=0pt,labelindent=0pt,labelwidth=1em,labelsep=0pt,align=left}
 
 % ── Section / subsection ─────────────────────────────────────
 \newcommand{\mysec}[1]{%
@@ -403,8 +403,8 @@ MaxFlow(G,s,t,C):
 \kp{Weak duality: $v(f){\le}c(A,B)$, so max flow is bounded by cap of $\forall$ $s$-$t$ cuts.}
 \tp{\defterm{Max-Flow Min-Cut Theorem:} max value of an $s$-$t$ flow (flow passing from $s{\to}t$) equals min capacity of an $s$-$t$ cut (i.e., smallest total weight of edges which if removed would disconnect source from sink).}
 \ap{Lemma: if there is no $s$-$t$ path in $G_{Ford}$, then $\exists$ $s$-$t$ cut $(A^*,B^*){\in}G$ s.t.\ $v(f){=}c(A^*,B^*)$ and has the min capacity of any $s$-$t$ cut in $G$.}
-\kp{Min cut is not always unique. E.g., $s{\to}\cdot{\to}\cdot{\to}t$.}
-\kp{Check uniqueness: find min-cut closest to $s$ and min-cut closest to $t$. If they are same cut, min-cut must be unique.}
+\kp{Min cut is not always unique. E.g., $s{\to}{\cdot}{\to}{\cdot}{\to}t$.}
+\kp{Check uniqueness: find min-cut closest to $s$ and min-cut closest to $t$. If they are the same cut, min-cut must be unique.}
 
 %──────────────────────────────────────────────────────────────
 \mysec{Scaling Ford-Fulkerson}
@@ -441,7 +441,7 @@ Edmonds-Karp & $O(nm^2)$ & strongly poly \\
 %──────────────────────────────────────────────────────────────
 \tp{\defterm{Bipartite graph} $G{=}(V,E)$: undirected graph that nodes can be partitioned as $V{=}X{\cup}Y$ s.t.\ every edge $e{\in}E$ connects one node in $X$ and one in $Y$.}
 \tp{A \defterm{matching} $M$ in $G$ is a subset $M{\subseteq}E$ s.t.\ each node appears in at most one edge in $M$. \defterm{Max-size} match: add new edge will make a node appear twice.}
-\ap{Given bipartite graph $G$, find largest possible matching in $G$. Plan: design flow network $G'$ that has flow value $v(f){=}k$ iff $\exists$ a matching of size $k$ in $G$.}
+\tp{\prob Given bipartite graph $G$, find largest possible matching in $G$. Plan: design flow-net $G'$ that has flow value $v(f){=}k$ iff $\exists$ a matching of size $k$ in $G$.}
 \begin{center}
 \begin{tikzpicture}[>=Stealth, scale=0.85,
   xn/.style={circle,draw,fill=blue!50,inner sep=0pt,minimum size=7pt},
@@ -501,7 +501,7 @@ Edmonds-Karp & $O(nm^2)$ & strongly poly \\
 \ip{Since there are ${\ge}2$ units of flow entering $v$, there must be ${\ge}2$ leaving. Remove cycle edges; use the other outgoing edge to continue toward $t$.}
 \mysubsec{Flow cycles in undirected graphs}
 \ip{Replace each undirected edge with 2 directed edges in opposite directions ($c{=}1$ each). \prob two paths will use $e{=}\{u,v\}$ in opposite directions.}
-\kp{Fix: before extracting $s$-$t$ paths, remove all flow cycles on single edges.}
+\ap{Fix: before extracting $s$-$t$ paths, remove all flow cycles on single edges.}
 \tp{Runtime with Ford-Fulkerson: $O(mn)$ (same as bipartite matching).}
 
 %──────────────────────────────────────────────────────────────
@@ -545,7 +545,7 @@ Edmonds-Karp & $O(nm^2)$ & strongly poly \\
 \kp{Capacity: for each $e{\in}E$, $0{\le}f(e){\le}c_e$.}
 \kp{Demand: $\forall$ node $v$, $\sum_{e\ into\ v}f(e){-}\sum_{e\ out of\ v}f(e){=}f^{\text{in}}(v){-}f^{\text{out}}(v){=}d_v$.}
 \kp{If feasible circulation exists, then $\sum_v d_v{=}0$.}
-\ip{Proof: $\sum_v d_v{=}\sum_v(f^{\text{in}}(v){-}f^{\text{out}}(v))$. Each edge $e$ contributes ${+}f(e)$ to one node's $f^{\text{in}}$ and ${-}f(e)$ to another's $f^{\text{out}}$, so all terms cancel.}
+\ip{Proof: $\sum_v d_v{=}\sum_v(f^{\text{in}}(v){-}f^{\text{out}}(v))$. Each edge $e$ contributes ${+}f(e)$ to one node's $f^{\text{in}}$ and ${-}f(e)$ to another's $f^{\text{out}}$, so all terms cancel ($\sum_v d_v=0$).}
 \tp{\prob Given a CN $G$ with demands $\{d_v\}$, $\exists$ feasible circulation in $G$?}
 \ap{Reduction to max-flow: make $G'$ keep all edges/caps from $G$. Add super-source $s^*$ and super-sink $t^*$:}
 \kp{For each node $v$ with $d_v{<}0$ (source): add edge $(s^*,v)$ with cap $|d_v|$.}
@@ -555,13 +555,17 @@ Edmonds-Karp & $O(nm^2)$ & strongly poly \\
 \fp{$v(f){>}D$: impossible (cuts closest to $s^*$ and $t^*$ each have capacity $D$).}
 \fp{$v(f){=}D$: feasible circulation exists; flow on original edges (i.e., strip edges from $s^*$ and to $t^*$) gives valid circulation.}
 
-% Insert proof template?
+\mysubsec{Reduction proof-of-correctness}
+\begin{enumerate}
+    \item If {$\exists$} circ.\ $f$ with demands $\{d_v\}$ in $G$, there is max flow of value $D$ in $G'$. \\ If $G$ has circulation satisfying all demands, the net flow absorbed/produced by each demand node can be rerouted thru super-source/sink edges. Each node with $d_v{>}0$ was receiving $d_v$ net flow, which now comes from $(s^*,v)$, so all $s^*$ edges are saturated. Thus max flow in $G'$ achieves $D{=}\sum_{d_v>0}d_v$.
+    \item If {$\exists$} max flow of value $D$ in $G'$, there is feasible circulation $f$ with {$\{d_v\}$} in $G$. \\ If {$v(f)$} in $G'${=}$D$, every $e{=}(s^*,v)$ is saturated, i.e. demand is fully supplied. Remove $s^*,t^*$ and redirect flow back to original demand gives $f{\in} G$.
+\end{enumerate}
 
 %──────────────────────────────────────────────────────────────
 \mysec{Circulation with Lower Bounds}
 %──────────────────────────────────────────────────────────────
 \tp{$G{=}(V,E)$ where edge $e$ also has lower bound $\ell_e$ so $\ell_e{\le}f(e){\le}c_e$. Demand, source, and sink are same. \prob is there a feasible circ. in G?}
-\ap{Reduce feasible circulation with lower bounds to feasible circ.\ problem.}
+\ap{Reduce feasible circulation with lower bounds to feasible circulation.}
 \kp{Push initial flow $f_0$ where $f_0(e){=}\ell_e$ through $G$ to create flow imbalance $L_v$ based on $f_0$ at each node $v$ (find $f_0$ to satisfy all $\ell_e$'s):}
 \rb{L_v = \sum_{e\;\text{into}\;v}\!\ell_e \;-\; \sum_{e\;\text{out of}\;v}\!\ell_e}
 \kp{Construct $G'$ with $c'_e{=}c_e{-}\ell_e$, $\ell'_e{=}0$, and $d'_v{=}d_v{-}L_v$.}
@@ -571,20 +575,11 @@ Edmonds-Karp & $O(nm^2)$ & strongly poly \\
 \mysec{Survey Design Problem}
 %──────────────────────────────────────────────────────────────
 \tp{Input: which customer bought which product; $\forall$ customer $i$, ask min/max questions $(m_i,\ell_i)$; $\forall$ product $j$, ask min/max questions $(m_j,\ell_j)$.}
-\tp{Create bipartite flow network:}
-\kp{$s{\to}i$: capacity $[\,m_i,\;\ell_i\,]$ {$\cdots$} bounds on questions per customer}
-\kp{$i{\to}j$ ($i$ bought $j$): cap $[\,0,\;1\,]$ {$\cdots$} ask {$\le$}1 question per product per customer}
-\kp{$j{\to}t$: capacity $[\,m_j,\;\ell_j\,]$ {$\cdots$} bounds on questions per product}
-\tp{Lower-bounds reduction to standard max flow:}
-\kp{$\forall$ edge $(u,v)$ with lower bound $\ell_{uv}$: subtract $\ell_{uv}$ from capacity, so new cap${=}c_{uv}{-}\ell_{uv}$.}
-\fp{Subtracting $\ell$ breaks conservation: node $v$ ``loses'' $\sum_{\text{in}}\ell_{uv}$ incoming and ``loses'' $\sum_{\text{out}}\ell_{vw}$ outgoing. Set demand $d_v{=}\sum_{\text{in}}\ell_{uv}{-}\sum_{\text{out}}\ell_{vw}$.}
-\fp{Add super-source $s^*$ and super-sink $t^*$:
-$\forall v$ with $d_v{>}0$: add edge $(s^*,v)$ with cap $d_v$.
-$\forall v$ with $d_v{<}0$: add edge $(v,t^*)$ with cap $|d_v|$.}
-\fp{Also add edge $(t{\to}s)$ with cap $\infty$ to allow circulation in original network.}
-\kp{Compute max flow in this new graph. Let $D{=}\sum_{d_v>0}d_v$.}
-\fp{$v(f){=}D$: feasible survey exists. Recover assignment: $f_{uv}^{\text{original}}{=}f_{uv}^{\text{new}}{+}\ell_{uv}$.}
-\fp{$v(f){<}D$: no valid survey exists.}
+\ap{Reduce to circulation with lower bounds.}
+\kp{Build bipartite FN with source $s$, sink $t$, customer and product nodes:}
+\fp{$s{\to}i$: capacity $[\,\ell_i,\;m_i\,]$ {$\cdots$} bounds on questions per customer.}
+\fp{$i{\to}j$ ($i$ bought $j$): cap $[\,0,\;1\,]$ {$\cdots$} ask {$\le$}1 ques.\ per product per customer.}
+\fp{$j{\to}t$: capacity $[\,\ell_j,\;m_j\,]$ {$\cdots$} bounds on questions per product.}
 \begin{center}
 \begin{tikzpicture}[>=Stealth, scale=0.85, every node/.style={transform shape},
   nd/.style={circle,draw,fill=gray!20,inner sep=1pt,minimum size=12pt,font=\scriptsize}]
@@ -592,7 +587,7 @@ $\forall v$ with $d_v{<}0$: add edge $(v,t^*)$ with cap $|d_v|$.}
   \foreach \i [evaluate=\i as \y using {0.5-(\i-1)*0.5}] in {1,...,4} {
     \node[nd] (c\i) at (1.2, \y) {$c_\i$};
   }
-  \draw[->,blue!80] (s) -- node[font=\tiny,blue!80,above,inner sep=0.5pt,xshift=-12pt,yshift=2pt]{$[m_i,\ell_i]$} (c1);
+  \draw[->,blue!80] (s) -- node[font=\tiny,blue!80,above,inner sep=0.5pt,xshift=-12pt,yshift=2pt]{$[\ell_i,m_i]$} (c1);
   \foreach \i in {2,...,4} { \draw[->,blue!80] (s) -- (c\i); }
   \foreach \j [evaluate=\j as \y using {0.25-(\j-1)*0.5}] in {1,...,3} {
     \node[nd] (p\j) at (3.0, \y) {$p_\j$};
@@ -602,13 +597,15 @@ $\forall v$ with $d_v{<}0$: add edge $(v,t^*)$ with cap $|d_v|$.}
     \draw[->,gray!70] (c\i) -- (p\j);
   }
   \node[nd,fill=red!60] (t) at (4.2,0) {$t$};
-  \draw[->,red!70] (p1) -- node[font=\tiny,red!70,above,inner sep=0.5pt,xshift=3pt,yshift=3pt]{$[m_j,\ell_j]$} (t);
+  \draw[->,red!70] (p1) -- node[font=\tiny,red!70,above,inner sep=0.5pt,xshift=3pt,yshift=3pt]{$[\ell_j,m_j]$} (t);
   \foreach \j in {2,...,3} { \draw[->,red!70] (p\j) -- (t); }
 \end{tikzpicture}
 \end{center}
-\tp{Reduction to max flow: A feasible survey assignment exists iff max flow value $v(f)$ in the transformed network equals $D=\sum_{d_v > 0} d_v$.}
-\ip{If valid survey exists, it satisfies all $\ell_e$ and $c_e$. Subtracting lower bounds gives a feasible circulation in the residual network, which corresponds to a flow of value $D$ from $s^*$ to $t^*$ since every super-source edge is saturated.}
-\ip{If $v(f) = D$, then all edges from $s^*$ are saturated, meaning every node's demand is met. Adding back the lower bounds recovers a flow that respects all original capacities $[\ell_{uv}, c_{uv}]$, which encodes a valid survey assignment.}
+\tp{Why this is a valid reduction:}
+\kp{Each unit of flow along path $s{\to}i{\to}j{\to}t${$\coloneq$}ask customer $i$ one question about product $j$. Edge $(i,j)$ exists only if $i$ bought $j$, and cap $[0,1]$ ensures at most one question per customer-product pair.}
+\kp{Lower/upper bounds on $s{\to}i$ edges force each customer to be asked between $[\ell_i,m_i]$ questions total (conservation: $f(e)$ into $i${=}total questions asked of $i$){$\Leftrightarrow $}bounds on $j{\to}t$ edges force each product to receive $[\ell_j,m_j]$ questions.}
+\kp{A feasible circulation exists iff all bounds can be simultaneously satisfied; a feasible survey exists iff $v(f){=}D$.}
+\kp{Reduction: subtract lower bounds, construct $G'$ with super-source $s^*$ and super-sink $t^*$, and run max flow. A feasible survey exists iff $v(f){=}D{=}\sum_{d_v>0}d_v$. If so, recover the assignment via $f_{uv}^{\text{original}}{=}f_{uv}^{\text{new}}{+}\ell_{uv}$.}
 
 %──────────────────────────────────────────────────────────────
 \mysec{Reduction Summary}
@@ -620,8 +617,6 @@ Edge-Disjoint & $c_e{=}1$ on $G$ & $O(mn)$ \\
 Node-Disjoint & node splitting, $c{=}1$ & $O(mn)$ \\
 Circulation & add $s^*,t^*$ & max-flow \\
 Circ.+Lower Bds & 2-pass, $c'{=}c{-}\ell$ & max-flow \\
-Survey Design & circ.+lower bds & max-flow \\
 }
 
 \end{document}
-
